@@ -1,0 +1,252 @@
+
+
+module FunctionUnitAndBus(MAX10_CLK1_50, KEY, SW, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, LEDR);
+	input        MAX10_CLK1_50;									// System clock
+	input  [1:0] KEY;													// DE10 Pushbuttons
+	input  [9:0] SW;													// DE10 Switches 
+	output [6:0] HEX0;												// DE10 Seven-segment displays
+	output [6:0] HEX1;
+	output [6:0] HEX2;
+	output [6:0] HEX3;
+	output [6:0] HEX4;
+	output [6:0] HEX5;
+	output [9:0] LEDR;												// DE10 LEDs
+
+
+	
+	
+	wire [1:0] buttons;												// DO NOT MODIFY!
+
+
+	wire [7:0] val0 /* synthesis keep */ ;						// DO NOT MODIFY!
+	wire [7:0] val1 /* synthesis keep */ ;						// DO NOT MODIFY!
+	wire [7:0] val2 /* synthesis keep */ ;						// DO NOT MODIFY!
+	wire [7:0] val3 /* synthesis keep */ ;						// DO NOT MODIFY!
+
+
+	wire [7:0] operandA /* synthesis keep */ ;				// DO NOT MODIFY!
+	wire [7:0] operandB /* synthesis keep */ ;				// DO NOT MODIFY!
+	
+	
+	wire [7:0] result /* synthesis keep */ ;					// DO NOT MODIFY!
+	wire V, C, N, Z  /* synthesis keep */ ;					// DO NOT MODIFY!
+
+
+	wire [7:0] bus /* synthesis keep */ ; 						// DO NOT MODIFY!
+	
+
+	wire       load;													// Register load
+
+	
+
+	
+		
+
+	buttonpress b1(MAX10_CLK1_50, KEY[1],     buttons[1]);
+	buttonpress b0(MAX10_CLK1_50, KEY[0],     buttons[0]);
+	
+
+	register8bit r0(MAX10_CLK1_50, R0,         bus,             val0);
+	register8bit r1(MAX10_CLK1_50, R1,         bus,             val1);
+	register8bit r2(MAX10_CLK1_50, R2,         bus,             val2);
+	register8bit r3(MAX10_CLK1_50, R3,         bus,             val3);
+
+
+	topBus BUS1(operandA, operandB, R0, R1, R2, R3, SW[9:4], val0, val1, val2, val3, buttons[1:0]);
+	
+
+	assign nota = ~operandA;
+	assign notb = ~operandB;
+	
+	assign orR[7] = operandA[7] | operandB[7];
+	assign orR[6] = operandA[6] | operandB[6];
+	assign orR[5] = operandA[5] | operandB[5];
+	assign orR[4] = operandA[4] | operandB[4];
+	assign orR[3] = operandA[3] | operandB[3];
+	assign orR[2] = operandA[2] | operandB[2];
+	assign orR[1] = operandA[1] | operandB[1];
+	assign orR[0] = operandA[0] | operandB[0];
+	
+	assign andR = ~nandR;
+	assign nandR = ~(operandA & operandB);
+	
+	assign rem16[7] = operandB[7];
+	assign rem16[6] = operandB[7];
+	assign rem16[5] = operandB[7];
+	assign rem16[4] = operandB[7];
+	assign rem16[3:0] = operandB[3:0];
+	assign mult8[7:3] = operandB[4:0];
+	assign mult8[2:0] = 1'b0;
+	
+	wire[7:0] raTempCarry, raA, raB, sum, uniq00, negs01, math10, logi11;
+	wire[7:0] andR, nandR, orR, mult8, rem16, negc;
+	wire[7:0] nota, negac, nega;
+	wire[7:0] notb, negbc, negb;
+	wire[7:0] ambc, amb;
+	wire[7:0] apbc, apb;
+	wire[7:0] bmac, bma;
+	wire[4:0] cout;
+	wire carryIn, R0, R1, R2, R3, isExtra;
+	
+	assign carryIn = ~(SW[3] & ~SW[2] & ~SW[1] & SW[0]);
+	assign isExtra = (SW[3] & ~SW[2]) | (~SW[3] & SW[2] & ~SW[0]);
+	
+	rippleAdder nega1(cout[0], negac[7:0], nega[7:0], nota[7:0], 8'b00000000, carryIn);
+	rippleAdder negb1(cout[1], negbc[7:0], negb[7:0], notb[7:0], 8'b00000000, carryIn);
+	rippleAdder amb1(cout[2], ambc[7:0], amb[7:0], operandA[7:0], notb[7:0], carryIn);
+	rippleAdder apb1(cout[3], apbc[7:0], apb[7:0], operandA[7:0], operandB[7:0], carryIn);
+	rippleAdder bma1(cout[4], bmac[7:0], bma[7:0], operandB[7:0], nota[7:0], carryIn);
+	
+	mux4x1 uniq1(uniq00[0], SW[1], SW[0], mult8[0], rem16[0], 1'b0, 1'b0);
+	mux4x1 uniq2(uniq00[1], SW[1], SW[0], mult8[1], rem16[1], 1'b0, 1'b0);
+	mux4x1 uniq3(uniq00[2], SW[1], SW[0], mult8[2], rem16[2], 1'b0, 1'b0);
+	mux4x1 uniq4(uniq00[3], SW[1], SW[0], mult8[3], rem16[3], 1'b0, 1'b0);
+	mux4x1 uniq5(uniq00[4], SW[1], SW[0], mult8[4], rem16[4], 1'b0, 1'b0);
+	mux4x1 uniq6(uniq00[5], SW[1], SW[0], mult8[5], rem16[5], 1'b0, 1'b0);
+	mux4x1 uniq7(uniq00[6], SW[1], SW[0], mult8[6], rem16[6], 1'b0, 1'b0);
+	mux4x1 uniq8(uniq00[7], SW[1], SW[0], mult8[7], rem16[7], 1'b0, 1'b0);
+	
+	mux4x1 negs1(negs01[0], SW[1], SW[0], negb[0], notb[0], nega[0], nota[0]);
+	mux4x1 negs2(negs01[1], SW[1], SW[0], negb[1], notb[1], nega[1], nota[1]);
+	mux4x1 negs3(negs01[2], SW[1], SW[0], negb[2], notb[2], nega[2], nota[2]);
+	mux4x1 negs4(negs01[3], SW[1], SW[0], negb[3], notb[3], nega[3], nota[3]);
+	mux4x1 negs5(negs01[4], SW[1], SW[0], negb[4], notb[4], nega[4], nota[4]);
+	mux4x1 negs6(negs01[5], SW[1], SW[0], negb[5], notb[5], nega[5], nota[5]);
+	mux4x1 negs7(negs01[6], SW[1], SW[0], negb[6], notb[6], nega[6], nota[6]);
+	mux4x1 negs8(negs01[7], SW[1], SW[0], negb[7], notb[7], nega[7], nota[7]);
+	
+	mux4x1 math1(math10[0], SW[1], SW[0], amb[0], apb[0], operandA[0], bma[0]);
+	mux4x1 math2(math10[1], SW[1], SW[0], amb[1], apb[1], operandA[1], bma[1]);
+	mux4x1 math3(math10[2], SW[1], SW[0], amb[2], apb[2], operandA[2], bma[2]);
+	mux4x1 math4(math10[3], SW[1], SW[0], amb[3], apb[3], operandA[3], bma[3]);
+	mux4x1 math5(math10[4], SW[1], SW[0], amb[4], apb[4], operandA[4], bma[4]);
+	mux4x1 math6(math10[5], SW[1], SW[0], amb[5], apb[5], operandA[5], bma[5]);
+	mux4x1 math7(math10[6], SW[1], SW[0], amb[6], apb[6], operandA[6], bma[6]);
+	mux4x1 math8(math10[7], SW[1], SW[0], amb[7], apb[7], operandA[7], bma[7]);
+	
+	mux4x1 logi1(logi11[0], SW[1], SW[0], orR[0], andR[0], nandR[0], 1'b0);
+	mux4x1 logi2(logi11[1], SW[1], SW[0], orR[1], andR[1], nandR[1], 1'b0);
+	mux4x1 logi3(logi11[2], SW[1], SW[0], orR[2], andR[2], nandR[2], 1'b0);
+	mux4x1 logi4(logi11[3], SW[1], SW[0], orR[3], andR[3], nandR[3], 1'b0);
+	mux4x1 logi5(logi11[4], SW[1], SW[0], orR[4], andR[4], nandR[4], 1'b0);
+	mux4x1 logi6(logi11[5], SW[1], SW[0], orR[5], andR[5], nandR[5], 1'b0);
+	mux4x1 logi7(logi11[6], SW[1], SW[0], orR[6], andR[6], nandR[6], 1'b0);
+	mux4x1 logi8(logi11[7], SW[1], SW[0], orR[7], andR[7], nandR[7], 1'b0);
+	
+	mux4x1 bits1(result[0], SW[3], SW[2], uniq00[0], negs01[0], math10[0], logi11[0]);
+	mux4x1 bits2(result[1], SW[3], SW[2], uniq00[1], negs01[1], math10[1], logi11[1]);
+	mux4x1 bits3(result[2], SW[3], SW[2], uniq00[2], negs01[2], math10[2], logi11[2]);
+	mux4x1 bits4(result[3], SW[3], SW[2], uniq00[3], negs01[3], math10[3], logi11[3]);
+	mux4x1 bits5(result[4], SW[3], SW[2], uniq00[4], negs01[4], math10[4], logi11[4]);
+	mux4x1 bits6(result[5], SW[3], SW[2], uniq00[5], negs01[5], math10[5], logi11[5]);
+	mux4x1 bits7(result[6], SW[3], SW[2], uniq00[6], negs01[6], math10[6], logi11[6]);
+	mux4x1 bits8(result[7], SW[3], SW[2], uniq00[7], negs01[7], math10[7], logi11[7]);
+	
+	assign V = C ^ (negac[6] ^ negbc[6] ^ apbc[6] ^ ambc[6] ^ bmac[6]);
+	assign C = (cout[0] | cout[1] | cout[2] | cout[3] | cout[4]) & isExtra;
+	assign N = result[7];
+	assign Z = ~(result[0]|result[1]|result[2]|result[3]|result[4]|result[5]|result[6]|result[7]);
+
+
+   mux2to1_8bit m1(buttons[0], result, SW[7:0], bus);		
+
+
+	hexDecoder_7seg h1(HEX5,              HEX4,              operandA);
+	hexDecoder_7seg h2(HEX3,              HEX2,              operandB);
+	hexDecoder_7seg h3(HEX1,              HEX0,              result);
+
+	
+
+	assign LEDR = {6'b000000, V, C, N, Z};
+	
+
+endmodule
+
+
+
+
+module rippleAdder(cout, raTempCarry, sum, raA, raB, carryIn);
+	input [7:0] raA, raB;
+	input carryIn;
+	output [7:0] raTempCarry, sum, cout;
+
+	fullAdder FA11(raTempCarry[0], sum[0], raA[0], raB[0], carryIn);
+	fullAdder FA21(raTempCarry[1], sum[1], raA[1], raB[1], raTempCarry[0]);
+	fullAdder FA31(raTempCarry[2], sum[2], raA[2], raB[2], raTempCarry[1]);
+	fullAdder FA41(raTempCarry[3], sum[3], raA[3], raB[3], raTempCarry[2]);
+	fullAdder FA51(raTempCarry[4], sum[4], raA[4], raB[4], raTempCarry[3]);
+	fullAdder FA61(raTempCarry[5], sum[5], raA[5], raB[5], raTempCarry[4]);
+	fullAdder FA71(raTempCarry[6], sum[6], raA[6], raB[6], raTempCarry[5]);
+	fullAdder FA81(raTempCarry[7], sum[7], raA[7], raB[7], raTempCarry[6]);
+	
+	assign cout = raTempCarry;
+
+endmodule
+
+
+module decoder(sb1, sb2, button, r0, r1, r2, r3);
+	input sb1, sb2, button;
+	output r0, r1, r2, r3;
+	assign r0 = (~sb1 & ~sb2 & button);
+	assign r1 = (~sb1 & sb2 & button);
+	assign r2 = (sb1 & ~sb2 & button);
+	assign r3 = (sb1 & sb2 & button);
+endmodule
+
+module topBus(operandA, operandB, R0, R1, R2, R3, SW, val0, val1, val2, val3, buttons);
+	input [7:0] val0, val1, val2, val3;
+	input [5:0] SW;
+	input [1:0] buttons;
+	output [7:0] operandA, operandB;
+	output R0, R1, R2, R3;
+	
+	assign click = (buttons[1] | buttons[0]);
+	
+	decoder dec1(SW[5], SW[4], click, R0, R1, R2, R3);
+	
+	mux4x1 muxa1(operandA[7], SW[3], SW[2], val0[7], val1[7], val2[7], val3[7]);
+	mux4x1 muxa2(operandA[6], SW[3], SW[2], val0[6], val1[6], val2[6], val3[6]);
+	mux4x1 muxa3(operandA[5], SW[3], SW[2], val0[5], val1[5], val2[5], val3[5]);
+	mux4x1 muxa4(operandA[4], SW[3], SW[2], val0[4], val1[4], val2[4], val3[4]);
+	mux4x1 muxa5(operandA[3], SW[3], SW[2], val0[3], val1[3], val2[3], val3[3]);
+	mux4x1 muxa6(operandA[2], SW[3], SW[2], val0[2], val1[2], val2[2], val3[2]);
+	mux4x1 muxa7(operandA[1], SW[3], SW[2], val0[1], val1[1], val2[1], val3[1]);
+	mux4x1 muxa8(operandA[0], SW[3], SW[2], val0[0], val1[0], val2[0], val3[0]);
+	
+	mux4x1 muxb1(operandB[7], SW[1], SW[0], val0[7], val1[7], val2[7], val3[7]);
+	mux4x1 muxb2(operandB[6], SW[1], SW[0], val0[6], val1[6], val2[6], val3[6]);
+	mux4x1 muxb3(operandB[5], SW[1], SW[0], val0[5], val1[5], val2[5], val3[5]);
+	mux4x1 muxb4(operandB[4], SW[1], SW[0], val0[4], val1[4], val2[4], val3[4]);
+	mux4x1 muxb5(operandB[3], SW[1], SW[0], val0[3], val1[3], val2[3], val3[3]);
+	mux4x1 muxb6(operandB[2], SW[1], SW[0], val0[2], val1[2], val2[2], val3[2]);
+	mux4x1 muxb7(operandB[1], SW[1], SW[0], val0[1], val1[1], val2[1], val3[1]);
+	mux4x1 muxb8(operandB[0], SW[1], SW[0], val0[0], val1[0], val2[0], val3[0]);
+
+endmodule
+
+module mux4x1(out, sb1, sb2, a, b, c, d);
+	input sb1, sb2, a, b, c, d;
+	output out;
+	assign out = (a & ~sb1 & ~sb2) | (b & ~sb1 & sb2) | (c & sb1 & ~sb2) | (d & sb1 & sb2);
+endmodule
+
+module fullAdder(carry, sum, a, b, c);
+	input a,b,c;
+	output carry, sum;
+	assign sum = (~a & ~b & c) | (~a & b & ~c) | (a & ~b & ~c) | (a & b & c);
+	assign carry = (a & b) | (a & c) | (b & c);
+endmodule
+
+
+module mux2to1_8bit(select, in0, in1, out);
+   input        select;
+   input  [7:0] in0;
+   input  [7:0] in1;
+   output [7:0] out;
+	
+	assign out = (select == 1'b0) ? in0 :
+	             (select == 1'b1) ? in1 : 8'bxxxxxxxx;
+
+endmodule
+
+

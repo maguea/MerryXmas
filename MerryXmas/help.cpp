@@ -63,10 +63,7 @@ void moduleInternals(string line, Modules* modules, int& index) {
 	}
 	else if(findFirstWord(line, 6) == "assign") { 
 		int oparCnt = count(line.begin(), line.end(), '(');
-		while (oparCnt > 0) {
-			replaceSubs(line, modules, index, oparCnt);
-			oparCnt--;
-		}
+		replaceSubs(line, modules, index, oparCnt);
 		modules[index].inverterCount = notCounter(0, line) + modules[index].inverterCount;
 	}
 	else {
@@ -112,6 +109,8 @@ void replaceSubs(string& line, Modules* modules, int index, int oparCnt) {
 				}
 			}
 		}
+		oparCnt--;
+		replaceSubs(line, modules, index, oparCnt);
 	}
 }
 

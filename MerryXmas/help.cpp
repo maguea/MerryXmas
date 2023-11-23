@@ -9,29 +9,33 @@ using namespace std;
 //Prints each part of struct
 void printAspect(Modules* modules, int index) {
 	cout << "[ " << index + 1 << " ]\tModule name: \"" << modules[index].name 
-		<< "\"\n\tInverters: " << modules[index].inverterCount << "\n\tAND Gates: ";
+		<< "\"\n\tInverters: " << modules[index].inverterCount << "\n\tAND Gate List: ";
 	for (int i = 0; i < modules[index].andGates.size(); i++) {
 		cout << modules[index].andGates[i] << ' ';
 	}
-	cout << "\n\tNAND Gates: ";
+	cout << "\n\tNAND Gate List: ";
 	for (int i = 0; i < modules[index].nandGates.size(); i++) {
 		cout << modules[index].nandGates[i] << ' ';
 	}
-	cout << "\n\tOR Gates: ";
+	cout << "\n\tOR Gate List: ";
 	for (int i = 0; i < modules[index].orGates.size(); i++) {
 		cout << modules[index].orGates[i] << ' ';
 	}
-	cout << "\n\tNOR Gates: ";
+	cout << "\n\tNOR Gate List: ";
 	for (int i = 0; i < modules[index].norGates.size(); i++) {
 		cout << modules[index].norGates[i] << ' ';
 	}
-	cout << "\n\tXOR Gates: ";
+	cout << "\n\tXOR Gate List: ";
 	for (int i = 0; i < modules[index].xorGates.size(); i++) {
 		cout << modules[index].xorGates[i] << ' ';
 	}
-	cout << "\n\tXNOR Gates: ";
+	cout << "\n\tXNOR Gate List: ";
 	for (int i = 0; i < modules[index].xnorGates.size(); i++) {
 		cout << modules[index].xnorGates[i] << ' ';
+	}
+	cout << "\n\tInternally Called Modules: ";
+	for (int i = 0; i < modules[index].calledModules.size(); i++) {
+		cout << modules[index].calledModules[i] << ' ';
 	}
 	cout << "\n\n";
 }
@@ -45,7 +49,7 @@ void moudleList(string line, Modules* modules, int& firstI) {
 	}
 }
 
-//Add internal head function
+//main
 void moduleInternals(string line, Modules* modules, int& index) {
 	string name{};
 	int location{ 0 };
@@ -54,15 +58,32 @@ void moduleInternals(string line, Modules* modules, int& index) {
 		location = findModule(name, modules);
 	}
 	else if(findFirstWord(line, 9) == "endmodule") {
+		//insert modules[index].count function
 		index++;
 	}
-	else {
+	else if(findFirstWord(line, 6) == "assign") { 
 		int oparCnt = count(line.begin(), line.end(), '(');
 		while (oparCnt > 0) {
 			replaceSubs(line, modules, index, oparCnt);
 			oparCnt--;
 		}
 		modules[index].inverterCount = notCounter(0, line) + modules[index].inverterCount;
+	}
+	else {
+		string firstWord = findFirstWord(line, findSpace(line) - 1);
+		callsModule(line, firstWord, modules, index);
+	}
+}
+
+void callsModule(string line, string firstWord, Modules* modules, int index) {
+	int foundIndex = findModule(firstWord, modules); 
+	if (!findModuleCall(line, "wire")) {
+		if (foundIndex != -1) {
+			modules[index].calledModules.push_back(modules[foundIndex].name);
+		}
+	}
+	else {
+		//wire condition here
 	}
 }
 
@@ -75,7 +96,7 @@ void replaceSubs(string& line, Modules* modules, int index, int oparCnt) {
 	int newOparCnt = oparCnt;
 	string temp, templine{ line };
 	trim(templine);
-	if ((oparCnt > 0) && (findFirstWord(templine, 6) == "assign")) {
+	if ((oparCnt > 0)) {
 		for (int i = 0; i < templine.length(); i++) {
 			if (templine[i] == '(') {
 				newOparCnt--;
@@ -96,22 +117,34 @@ void replaceSubs(string& line, Modules* modules, int index, int oparCnt) {
 
 void status(string gate, Modules* modules, int index) {
 	if (count(gate.begin(), gate.end(), '&') > 0) {
-		if (nCondition(gate))
+		if (nCondition(gate)){
 			modules[index].nandGates.push_back(count(gate.begin(), gate.end(), '&'));
-		else
+			modules[index].inverterCount--;
+		}
+		else {
+			gate.erase(0, 1);
 			modules[index].andGates.push_back(count(gate.begin(), gate.end(), '&'));
+		}
 	}
 	else if (count(gate.begin(), gate.end(), '|') > 0) {
-		if (nCondition(gate))
+		if (nCondition(gate)){
 			modules[index].norGates.push_back(count(gate.begin(), gate.end(), '|'));
-		else
+			modules[index].inverterCount--; 
+		}
+		else {
+			gate.erase(0, 1);
 			modules[index].orGates.push_back(count(gate.begin(), gate.end(), '|'));
+		}
 	}
 	else if (count(gate.begin(), gate.end(), '^') > 0) {
-		if (nCondition(gate))
+		if (nCondition(gate)){
+			modules[index].inverterCount--;
 			modules[index].xnorGates.push_back(count(gate.begin(), gate.end(), '^'));
-		else
+		}
+		else{
+			gate.erase(0, 1);
 			modules[index].xorGates.push_back(count(gate.begin(), gate.end(), '^'));
+		}
 	}
 }
 
@@ -159,7 +192,11 @@ bool nCondition(string line) {
 	return false;
 }
 
-//find amount of ~ ----add 'not' assignment
+bool findModuleCall(string prevMod, const string& posMod) {
+	return prevMod.find(posMod) != string::npos;
+}
+
+//find amount of ~
 int notCounter(int i, string line){
 	int count = 0; 
 	if (i == line.size()) 
@@ -175,6 +212,16 @@ int findModule(string match, Modules* modules) {
 	for (int i{ 0 }; i < sizeof(modules); i++) {
 		if (modules[i].name == match)
 			return i;
+	}
+	return -1;
+}
+
+int findSpace(string line) {
+	for (int i{ 0 }; i < line.length(); i++) {
+		if (line[i] == ' ') {
+			return i;
+			break;
+		}
 	}
 	return -1;
 }

@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="help.cpp">
+    <ClCompile Include="verilog_library.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -28,7 +28,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="help.h">
+    <ClInclude Include="verilog_library.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

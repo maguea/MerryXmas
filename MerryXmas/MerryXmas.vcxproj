@@ -128,13 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="help.cpp" />
+    <ClCompile Include="verilog_library.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="copied_verilog.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="help.h" />
+    <ClInclude Include="verilog_library.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

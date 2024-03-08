@@ -1,22 +1,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//	File: FunctionUnitAndBus.v
-// Top-level file for Function Unit and Bus System (LE C.3)
+// File: demoVerliogForCalculator.v 
+// Top-level file for Sleep Deprivation (LE ANY LETTER GOES HERE)
 //
-// Created by J.S. Thweatt, 4 November 2019
-// Based on BusControl module by Adddison Ferrari
+// Created by ARM, 03/05/2024
+// Uses both dataflow and structural verilog writing methods
 //
-// The FunctionUnitandBus module should contain both your function unit and your bus control logic.
-//
-// Modified by: KLC, 19 Oct 2022 - switch mapping
-//              KLC, 20 Sep 2023 - switch mapping
-//					 ARM, 10 Nov 2023 - LE_C3 implementation
+// Modified by: ARM, 03/05/2024 Example File Created
+// Matthew 4:4, "Man shall not live by bread alone, but by every word that proceeds from the mouth of God."
+//              
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // DO NOT MODIFY THE MODULE AND PORT DECLARATIONs OF THIS MODULE!
 
-module FunctionUnitAndBus(MAX10_CLK1_50, KEY, SW, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, LEDR);
+module mainModule(MAX10_CLK1_50, KEY, SW, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, LEDR);
 	input        MAX10_CLK1_50;									// System clock
 	input  [1:0] KEY;													// DE10 Pushbuttons
 	input  [9:0] SW;													// DE10 Switches 
@@ -232,7 +230,7 @@ module FunctionUnitAndBus(MAX10_CLK1_50, KEY, SW, HEX0, HEX1, HEX2, HEX3, HEX4, 
 	
 // END TOP-LEVEL HARDWARE MODEL //
 
-endmodule
+endmodule 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -313,9 +311,7 @@ endmodule
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //	Module: mux2to1_8bit
-// 8-bit 2-to-1 multiplexer for use in the top-level module
-//
-//	Created by Jason Thweatt, 04 November 2019
+//  Some random thing a professor added to make your life hard, doesn't use conventional code.
 //
 // **************************
 // DO NOT MODIFY THIS MODULE!
@@ -323,11 +319,22 @@ endmodule
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-module mux2to1_8bit(select, in0, in1, out);
+module mux2to1_8bit(select, in0, in1, out); //This one needs work, and will 100% need console imput.
    input        select;
    input  [7:0] in0;
    input  [7:0] in1;
    output [7:0] out;
+
+   not exampleNot(output, a);
+   and exampleNot(output, a, b);
+   and exampleNot(output, a, b, c);
+   and exampleNot(output, a, b, c, d);
+   or exampleNot(output, a, b);
+   xor exampleNot(output, a, b);
+
+   nand exampleNot(output, a, b);
+   nor exampleNot(output, a, b);
+   xnor exampleNot(output, a, b);
 	
 	assign out = (select == 1'b0) ? in0 :
 	             (select == 1'b1) ? in1 : 8'bxxxxxxxx;

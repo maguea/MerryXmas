@@ -325,8 +325,8 @@ module mux2to1_8bit(select, in0, in1, out); //This one needs work, and will 100%
    input  [7:0] in1;
    output [7:0] out;
 
-   not exampleNot(output, a);
-   and exampleNot(output, a, b);
+	not exampleNot(output, a);
+	and exampleNot(output, a, b);
    and exampleNot(output, a, b, c);
    and exampleNot(output, a, b, c, d);
    or exampleNot(output, a, b);

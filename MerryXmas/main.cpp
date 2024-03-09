@@ -1,5 +1,5 @@
 // "MerryXmas" main.cpp
-// Created by ARM 11/21/2023
+// Created by ARM 10/21/2023
 // Last Edited 03/08/2024
 // 
 // Matthew 4:4, "Man shall not live by bread alone, but by every word that proceeds from the mouth of God."
@@ -12,15 +12,13 @@ int main() {
     int moduleTotal{ 0 };
     std::ifstream originalVerilog{ "copied_verilog.txt" };
     std::ofstream verilogNC{ "verilog_no_comments.txt" };
-
-    //Check if program was copied correctly
-    if (!originalVerilog) {
+    
+    if (!originalVerilog) { //Fail case for if program was downloaded incorrectly
         std::cout << "Program Download Error.";
-        return 0;
+        return -1;
     }
 
-    //Create dupe without huge comments
-    while (std::getline(originalVerilog, line)){
+    while (std::getline(originalVerilog, line)){ //Create dupe without huge comments
         if (!isComment(line)) {
             verilogNC << removeInLineComments(line) << "\n"; //fix inline comments to work with /**/
             if (findSubstring(line, "module ") && !findSubstring(line, "endmodule")) {
@@ -32,44 +30,21 @@ int main() {
     verilogNC.close();
     originalVerilog.close(); 
 
-    //rewrite vector into array for easier transfer
-    Modules* modules = new Modules[moduleTotal];
+    Modules* modules = new Modules[moduleTotal]; //rewrite vector into array for easier transfer
 
     for (int i{ 0 }; i < moduleTotal; i++)
         modules[i].name = nameLst[i];
 
-    //Use smaller file without comments to avoid dupe, run scanner
-    int index{ 0 };
+    int index{ 0 }; //Use smaller file without comments to avoid dupe, run scanner
     std::fstream copyFile;
     copyFile.open("verilog_no_comments.txt");
     while (std::getline(copyFile, line)) {
-        //removeWhiteSpace(line);
         if (findSubstring(line, "endmodule"))
             index++; //send this index along to a count function OR make a object for each
         determineAbstraction(modules, line, index);
     }
     
-    
-    //Add entire thing to print function feature
-    addUp(modules, moduleTotal);
+    completeSummary(modules, moduleTotal); //Prints and asks for potential edits
 
-    std::cout << "Totoal modules found: " << moduleTotal << "\n\nModule List:\n";
-    for (int i{ 0 }; i < moduleTotal; i++) {
-        printAspect(modules, i);
-    }
-    
-
-    //Console imput for missed modules
-    char response;
-    std::string errorModule;
-    int requriedTransistors;
-    std::cout << "Is there anything you need to add/change (y/n): ";
-    std::cin >> response;
-    if (response == 'y') {
-        std::cout << "Which module needs modification: ";
-        std::cin >> response;
-        std::cout << "How many transistors are expected: ";
-        std::cin >> requriedTransistors;
-    }
     return 0;
 }

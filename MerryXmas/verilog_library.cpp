@@ -1,15 +1,4 @@
 #include"verilog_library.h"
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstring>
-#include <vector>
-#include <cctype>
-#include <sstream>
-#include <iomanip>
-#include <cmath>
-#include <functional>
 
 
 //Initial read functions
@@ -92,7 +81,6 @@ int checkForRepeat(Modules* modules, std::string name, int index) {
 
 void determineGate(Modules* modules, std::string line, std::string firstWord, int index) {
 	int count = std::count_if(line.begin(), line.end(), [](char c) {return c == ','; });
-	
 	if (firstWord == "not") 
 		modules[index].inverterCount += count;
 	else if (firstWord == "and")
@@ -108,10 +96,10 @@ void determineGate(Modules* modules, std::string line, std::string firstWord, in
 	else if (firstWord == "xnor")
 		modules[index].xnorGates.push_back(count);
 	else if (firstWord == "assign")
-		dataFlowGates(modules, line, index);
+		dataFlowGates(modules, line, index, DONE);
 }
 
-PreviousGate dataFlowGates(Modules* modules, std::string line, int index) {
+PreviousGate dataFlowGates(Modules* modules, std::string line, int index, PreviousGate lastStatus) {//add PreviousGate lastStatus for abstraction
 	int i{ 0 };
 	PreviousGate status = DONE;
 	while (line[i] != '=')
@@ -119,19 +107,25 @@ PreviousGate dataFlowGates(Modules* modules, std::string line, int index) {
 	i++;
 	int parCount = std::count_if(line.begin(), line.end(), [](char c) {return c == '('; });
 	if (parCount > 0) {
-		//std::cout << "notready\n";
+		// std::cout << "notready\n";
+		// send partial to get state
+		// rewriteLine
+		// check for not condition
 	}
 	else {
 		if (std::count_if(line.begin(), line.end(), [](char c) {return c == '~'; }) > 0)
 			modules[index].inverterCount += std::count_if(line.begin(), line.end(), [](char c) {return c == '~'; });
 		if (std::count_if(line.begin(), line.end(), [](char c) {return c == '&'; }) > 0) {
 			modules[index].andGates.push_back(std::count_if(line.begin(), line.end(), [](char c) {return c == '&'; }));
+			status = AND; 
 		}
 		if (std::count_if(line.begin(), line.end(), [](char c) {return c == '|'; }) > 0) {
 			modules[index].orGates.push_back(std::count_if(line.begin(), line.end(), [](char c) {return c == '|'; }));
+			status = OR;
 		}
 		if (std::count_if(line.begin(), line.end(), [](char c) {return c == '^'; }) > 0) {
 			modules[index].xorGates.push_back(std::count_if(line.begin(), line.end(), [](char c) {return c == '^'; }));
+			status = XOR;
 		}
 	}
 	return status; 
@@ -139,28 +133,19 @@ PreviousGate dataFlowGates(Modules* modules, std::string line, int index) {
 
 
 //Final stages
-void completeSummary(Modules* modules, int moduleTotal) {
+void completeSummary(Modules* modules, int moduleTotal, std::vector<std::string> nameLst) {
 	addUp(modules, moduleTotal);
+
+	additionalModuleTransistors(modules, moduleTotal, nameLst);
 
 	std::cout << "Total modules found: " << moduleTotal << "\n\nModule List:\n";
 	for (int i{ 0 }; i < moduleTotal; i++) {
 		printAspect(modules, i);
 	}
+	std::cout << "-------------------------------------------------------------------------------------\n";
 	
-	//add error function for below
-	//HERE
-	char response;
-	std::string errorModule;
-	int requriedTransistors;
-	std::cout << "-------------------------------------------------------------------------------------\nIs there anything you need to add/change (y/n): ";
-	std::cin >> response;
-	if (response == 'y') {
-		std::cout << "Which module needs modification: ";
-		std::cin >> response;
-		std::cout << "How many transistors are expected: ";
-		std::cin >> requriedTransistors;
-	}
-	//TO HERE
+	errorChecker(modules);
+
 	std::cout << "\nThank you for using my program, good luck in your class.\n\t-ARM\n";
 }
 
@@ -182,11 +167,22 @@ void addUp(Modules* modules, int moduleTotal) {
 	}
 }
 
-//rename to print module specs or sumn
+void additionalModuleTransistors(Modules* modules, int moduleTotal, std::vector<std::string> nameLst) {
+	//make 3 layer forloop here, run to see why not working
+	for (int i{ 0 }; i < nameLst.size(); i++) {
+		for (int j{ 0 }; j < modules[i].reducedCalledModules.size(); j++) {
+			std::cout << nameLst[i] << " " << modules[i].reducedCalledModules[j].moduleName << "\n";
+			if (nameLst[i] == modules[i].reducedCalledModules[j].moduleName) {
+				modules[i].reducedCalledModules[j].isBottomLayer = false;
+				std::cout << nameLst[i] << std::endl;
+			}
+		}
+	}
+}
+
 void printAspect(Modules* modules, int index) {
-	std::cout << "-------------------------------------------------------------------------------------\n" << "[ " << index + 1 << " ]\tModule name: \"" << modules[index].name
-		//<< " (Total Transistors: " << modules[index].moduleTotal 
-		<< "\"\n\tInverters: " << modules[index].inverterCount << "\n\tAND Gate List: ";
+	std::cout << "-------------------------------------------------------------------------------------\n" << "[ " << index + 1 
+		<< " ]\tModule name: \"" << modules[index].name << "\"\n\tInverters: " << modules[index].inverterCount << "\n\tAND Gate List: ";
 	for (int i = 0; i < modules[index].andGates.size(); i++) 
 		std::cout << modules[index].andGates[i] << ' ';
 	std::cout << "\n\tNAND gate list: ";
@@ -206,7 +202,23 @@ void printAspect(Modules* modules, int index) {
 		std::cout << modules[index].xnorGates[i] << ' ';
 	std::cout << "\n\tInternally called modules:\n";
 	for (int i = 0; i < modules[index].reducedCalledModules.size(); i++) { //edit to make putput a better list
-		std::cout << "\n\t\t{" << i + 1 << "} " << modules[index].reducedCalledModules[i].moduleName << ", " << modules[index].reducedCalledModules[i].count << " times";
+		std::cout << "\n\t\t{" << i + 1 << "} " << modules[index].reducedCalledModules[i].moduleName << ", " 
+			<< modules[index].reducedCalledModules[i].count << " times";
 	}
 	std::cout << "\n\n\tTotal transistors counted in "<< modules[index].name <<": " << modules[index].moduleTotal << "\n\n";
+}
+
+void errorChecker(Modules* modules) {
+	char response;
+	std::string errorModule;
+	int requriedTransistors;
+	std::cout << "Is there anything you need to add/change (y/n): ";
+	std::cin >> response;
+	if (response == 'y') {
+		system("cls"); //use this to clear terminal
+		std::cout << "Which module needs modification: ";
+		std::cin >> response;
+		std::cout << "How many transistors are expected: ";
+		std::cin >> requriedTransistors;
+	}
 }

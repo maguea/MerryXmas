@@ -44,7 +44,7 @@ int main() {
         determineAbstraction(modules, line, index);
     }
     
-    completeSummary(modules, moduleTotal); //Prints and asks for potential edits
+    completeSummary(modules, moduleTotal, nameLst); //Prints and asks for potential edits
 
     return 0;
 }

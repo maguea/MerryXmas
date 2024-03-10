@@ -2,18 +2,21 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include<string>
+#include <string>
+#include <algorithm>
+#include <iomanip>
+#include <stdlib.h>
 
 struct ReducedModule {
 	std::string moduleName;
 	int count{ 0 };
+	bool isBottomLayer{ true };
 };
 
 struct Modules {
 	std::string name;
 	int inverterCount{ 0 };
 	std::vector <int> andGates, orGates, nandGates, norGates, xorGates, xnorGates;
-	std::vector <std::string> calledModules;//edit out
 	std::vector <ReducedModule> reducedCalledModules;
 	int moduleTotal{ 0 };
 };
@@ -36,10 +39,11 @@ int checkForRepeat(Modules* modules, std::string name, int index);
 //Module counter
 void determineAbstraction(Modules* modules, std::string line, int index);
 void determineGate(Modules* modules, std::string line, std::string firstWord, int index);
-PreviousGate dataFlowGates(Modules* modules, std::string line, int index); 
+PreviousGate dataFlowGates(Modules* modules, std::string line, int index, PreviousGate lastStatus);
 
 //Print module specs
-void completeSummary(Modules* modules, int moduleTotal);
-void abstractionOrganizer(Modules* modules, int moduleTotal); 
+void completeSummary(Modules* modules, int moduleTotal, std::vector<std::string> nameLst);
 void addUp(Modules* modules, int moduleTotal);
+void additionalModuleTransistors(Modules* modules, int moduleTotal, std::vector<std::string> nameLst);
 void printAspect(Modules* modules, int index);
+void errorChecker(Modules* modules);
